@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Home, Bed, Bath, Maximize } from 'lucide-react';
+import { MapPin, Hop as Home, Bed, Bath, Maximize } from 'lucide-react';
 import api from '../api/axios';
 import { Property } from '@peec/shared';
 import { useAuthStore } from '../store/authStore';

@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Home, Building2, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
+import { Hop as Home, Building2, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 export default function Layout() {

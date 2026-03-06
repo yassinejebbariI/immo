@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import api from '../api/axios';
 import { Property, PropertyType, TransactionType } from '@peec/shared';
 

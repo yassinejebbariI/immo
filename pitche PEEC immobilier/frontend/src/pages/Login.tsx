@@ -1,25 +1,41 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import api from '../api/axios';
+import { supabase } from '../lib/supabase';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const setUser = useAuthStore((state) => state.setUser);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      const { data } = await api.post('/auth/login', { email, password });
-      setAuth(data.user, data.token);
-      navigate('/');
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) throw authError;
+
+      if (data.user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (userData) {
+          setUser(userData);
+          navigate('/');
+        }
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur de connexion');
+      setError(err.message || 'Erreur de connexion');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,9 +75,10 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-semibold"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
           >
-            Se connecter
+            {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
 

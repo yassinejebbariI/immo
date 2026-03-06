@@ -1,33 +1,62 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { UserRole } from '@peec/shared';
-import api from '../api/axios';
+import { supabase } from '../lib/supabase';
+
+type Role = 'client' | 'agency';
 
 export default function Register() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: '',
-    phone: '',
-    role: UserRole.CLIENT,
+    full_name: '',
+    role: 'client' as Role,
     companyName: '',
     license: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const setUser = useAuthStore((state) => state.setUser);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      const { data } = await api.post('/auth/register', formData);
-      setAuth(data.user, data.token);
-      navigate('/');
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (authError) throw authError;
+      if (!data.user) throw new Error('Registration failed');
+
+      const { error: insertError } = await supabase.from('users').insert({
+        id: data.user.id,
+        email: formData.email,
+        full_name: formData.full_name,
+        role: formData.role,
+        password_hash: formData.password
+      });
+
+      if (insertError) throw insertError;
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (userData) {
+        setUser(userData);
+        navigate('/');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur d\'inscription');
+      setError(err.message || 'Erreur d\'inscription');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,11 +76,11 @@ export default function Register() {
             <label className="block text-gray-700 mb-2">Type de compte</label>
             <select
               value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
-              <option value={UserRole.CLIENT}>Client</option>
-              <option value={UserRole.AGENCY}>Agence</option>
+              <option value="client">Client</option>
+              <option value="agency">Agence</option>
             </select>
           </div>
 
@@ -59,8 +88,8 @@ export default function Register() {
             <label className="block text-gray-700 mb-2">Nom complet</label>
             <input
               type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.full_name}
+              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
               required
             />
@@ -77,18 +106,8 @@ export default function Register() {
             />
           </div>
 
-          <div>
-            <label className="block text-gray-700 mb-2">Téléphone</label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-              required
-            />
-          </div>
 
-          {formData.role === UserRole.AGENCY && (
+          {formData.role === 'agency' && (
             <>
               <div>
                 <label className="block text-gray-700 mb-2">Nom de l'entreprise</label>
@@ -127,9 +146,10 @@ export default function Register() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-semibold"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
           >
-            S'inscrire
+            {loading ? 'Inscription...' : 'S\'inscrire'}
           </button>
         </form>
 

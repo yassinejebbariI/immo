@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, Shield, TrendingUp, Users, CheckCircle } from 'lucide-react';
+import { Shield, TrendingUp, CheckCircle } from 'lucide-react';
 
 export default function Home() {
   return (

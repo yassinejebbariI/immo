@@ -1,25 +1,24 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { Home, Building2, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { UserRole } from '@peec/shared';
 
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
   const getDashboardLink = () => {
     if (!user) return null;
     switch (user.role) {
-      case UserRole.AGENCY:
+      case 'agency':
         return '/agency/dashboard';
-      case UserRole.CLIENT:
+      case 'client':
         return '/client/dashboard';
-      case UserRole.ADMIN:
+      case 'admin':
         return '/admin/dashboard';
       default:
         return null;
@@ -48,7 +47,7 @@ export default function Layout() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <span className="text-gray-700">Bonjour, {user.name}</span>
+                  <span className="text-gray-700">Bonjour, {user.full_name}</span>
                   {getDashboardLink() && (
                     <Link to={getDashboardLink()!} className="flex items-center space-x-1 text-gray-700 hover:text-primary">
                       <LayoutDashboard size={18} />
